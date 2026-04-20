@@ -1,48 +1,59 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
+import Navbar from './components/Navbar';
+import VideoPlayer from './components/VideoPlayer';
+import PlaylistsContainer from './components/Playlists/PlaylistsContainer';
 
 const INITIAL_DATA = [
   {
     id: 'pl1',
-    name: 'Frontend Development',
+    name: 'My Awesome Playlist',
     videos: [
       {
-        id: 1,
-        title: '1. Building a YouTube Clone with React and CSS Grid',
+        id: 'vid1',
+        title: 'Building a YouTube Clone with React',
+        link: 'https://youtube.com/watch?v=clone-tutorial',
         likes: 1200,
-        dislikes: 42,
-        messages: [{ id: 1, user: 'User1', text: 'Hello everyone!' }]
+        dislikes: 42
       }
     ]
   }
 ];
 
 function App() {
-  const [playlists, setPlaylists] = useState(INITIAL_DATA);
-  const [currentVideo, setCurrentVideo] = useState(INITIAL_DATA[0].videos[0]);
-  const [messages, setMessages] = useState(currentVideo.messages);
-  const [likes, setLikes] = useState(currentVideo.likes);
-  const [dislikes, setDislikes] = useState(currentVideo.dislikes);
-  const [inputValue, setInputValue] = useState('');
-  const [expandedPlaylists, setExpandedPlaylists] = useState(['pl1']);
+  const [playlists, setPlaylists] = useState(() => {
+    const saved = localStorage.getItem('yt_clone_data');
+    return saved ? JSON.parse(saved) : INITIAL_DATA;
+  });
+
+  const [currentVideo, setCurrentVideo] = useState(playlists[0]?.videos[0] || null);
   
-  const chatEndRef = useRef(null);
+  const [addingToPlaylist, setAddingToPlaylist] = useState(null);
+  const [editingVideoId, setEditingVideoId] = useState(null);
+  const [newVideoTitle, setNewVideoTitle] = useState('');
+  const [newVideoLink, setNewVideoLink] = useState('');
+  const [step, setStep] = useState(1);
+
+  const [isCreatingPlaylist, setIsCreatingPlaylist] = useState(false);
+  const [editingPlaylistId, setEditingPlaylistId] = useState(null);
+  const [newPlaylistName, setNewPlaylistName] = useState('');
 
   useEffect(() => {
-    setMessages(currentVideo.messages);
-    setLikes(currentVideo.likes);
-    setDislikes(currentVideo.dislikes);
-  }, [currentVideo]);
+    localStorage.setItem('yt_clone_data', JSON.stringify(playlists));
+  }, [playlists]);
 
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  const handleLikeDislike = (type) => {
+    if (!currentVideo) return;
+    const newLikes = type === 'like' ? currentVideo.likes + 1 : currentVideo.likes;
+    const newDislikes = type === 'dislike' ? currentVideo.dislikes + 1 : currentVideo.dislikes;
+    
+    const updatedVideo = { ...currentVideo, likes: newLikes, dislikes: newDislikes };
+    setCurrentVideo(updatedVideo);
 
-  const handleSendMessage = (e) => {
-    if (e.key === 'Enter' && inputValue.trim()) {
-      setMessages([...messages, { id: Date.now(), user: 'You', text: inputValue }]);
-      setInputValue('');
-    }
+    setPlaylists(playlists.map(pl => ({
+      ...pl,
+      videos: pl.videos.map(v => v.id === currentVideo.id ? updatedVideo : v)
+    })));
   };
 
   const selectVideo = (video) => {
@@ -55,153 +66,162 @@ function App() {
       prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
     );
   };
+  
+  const [expandedPlaylists, setExpandedPlaylists] = useState([playlists[0]?.id]);
 
-  const createPlaylist = () => {
-    const name = prompt("Enter playlist name:");
-    if (name) {
-      const newPl = {
-        id: 'pl' + Date.now(),
-        name: name,
-        videos: []
-      };
-      setPlaylists([...playlists, newPl]);
-      setExpandedPlaylists([...expandedPlaylists, newPl.id]);
+  const handlePlaylistSubmit = (e) => {
+    if (e.key === 'Enter' && newPlaylistName.trim()) {
+      if (editingPlaylistId) {
+        setPlaylists(playlists.map(pl => 
+          pl.id === editingPlaylistId ? { ...pl, name: newPlaylistName } : pl
+        ));
+        setEditingPlaylistId(null);
+      } else {
+        const newPl = { id: 'pl' + Date.now(), name: newPlaylistName, videos: [] };
+        setPlaylists([...playlists, newPl]);
+        setExpandedPlaylists([...expandedPlaylists, newPl.id]);
+        setIsCreatingPlaylist(false);
+      }
+      setNewPlaylistName('');
+    } else if (e.key === 'Escape') {
+      setIsCreatingPlaylist(false);
+      setEditingPlaylistId(null);
+      setNewPlaylistName('');
     }
   };
 
-  const addVideo = (playlistId) => {
-    const title = prompt("Enter video title:");
-    if (title) {
-      const newVideo = {
-        id: Date.now(),
-        title: title,
-        likes: 0,
-        dislikes: 0,
-        messages: []
-      };
-      setPlaylists(playlists.map(pl => 
-        pl.id === playlistId ? { ...pl, videos: [...pl.videos, newVideo] } : pl
-      ));
+  const deletePlaylist = (e, id) => {
+    e.stopPropagation();
+    if (window.confirm("Delete this playlist?")) {
+      const newPlaylists = playlists.filter(pl => pl.id !== id);
+      setPlaylists(newPlaylists);
+      if (currentVideo && !newPlaylists.some(pl => pl.videos.some(v => v.id === currentVideo.id))) {
+        setCurrentVideo(newPlaylists[0]?.videos[0] || null);
+      }
+    }
+  };
+
+  const startEditPlaylist = (e, pl) => {
+    e.stopPropagation();
+    setEditingPlaylistId(pl.id);
+    setNewPlaylistName(pl.name);
+  };
+
+  const startAddingVideo = (playlistId) => {
+    setAddingToPlaylist(playlistId);
+    setEditingVideoId(null);
+    setStep(1);
+    setNewVideoTitle('');
+    setNewVideoLink('');
+  };
+
+  const startEditVideo = (e, playlistId, video) => {
+    e.stopPropagation();
+    setAddingToPlaylist(playlistId);
+    setEditingVideoId(video.id);
+    setNewVideoTitle(video.title);
+    setNewVideoLink(video.link);
+    setStep(1);
+  };
+
+  const deleteVideo = (e, playlistId, videoId) => {
+    e.stopPropagation();
+    if (window.confirm("Delete this video?")) {
+      const updatedPlaylists = playlists.map(pl => 
+        pl.id === playlistId 
+          ? { ...pl, videos: pl.videos.filter(v => v.id !== videoId) } 
+          : pl
+      );
+      setPlaylists(updatedPlaylists);
+      if (currentVideo?.id === videoId) {
+        setCurrentVideo(updatedPlaylists[0]?.videos[0] || null);
+      }
+    }
+  };
+
+  const handleVideoSubmit = (e, playlistId) => {
+    if (e.key === 'Enter') {
+      if (step === 1 && newVideoTitle.trim()) {
+        setStep(2);
+      } else if (step === 2 && newVideoLink.trim()) {
+        if (editingVideoId) {
+          setPlaylists(playlists.map(pl => 
+            pl.id === playlistId ? {
+              ...pl,
+              videos: pl.videos.map(v => v.id === editingVideoId ? { ...v, title: newVideoTitle, link: newVideoLink } : v)
+            } : pl
+          ));
+        } else {
+          const newVideo = {
+            id: 'vid' + Date.now(),
+            title: newVideoTitle,
+            link: newVideoLink,
+            likes: 0,
+            dislikes: 0
+          };
+          setPlaylists(playlists.map(pl => 
+            pl.id === playlistId ? { ...pl, videos: [...pl.videos, newVideo] } : pl
+          ));
+        }
+        setAddingToPlaylist(null);
+        setEditingVideoId(null);
+        setNewVideoTitle('');
+        setNewVideoLink('');
+        setStep(1);
+      }
+    } else if (e.key === 'Escape') {
+      setAddingToPlaylist(null);
+      setEditingVideoId(null);
+      setStep(1);
     }
   };
 
   return (
     <div className="app-container">
-      <nav className="navbar">
-        <div className="logo">
-          <span>YT</span> Clone
-        </div>
-      </nav>
+      <Navbar />
 
-      <main className="main-layout">
-        <section className="video-section">
-          <div className="video-placeholder">
-            <div style={{ textAlign: 'center' }}>
-               ▶️ {currentVideo.title}
-            </div>
+      <main className="main-layout hide-chat">
+        {currentVideo ? (
+          <VideoPlayer 
+            video={currentVideo}
+            likes={currentVideo.likes}
+            dislikes={currentVideo.dislikes}
+            onLike={() => handleLikeDislike('like')}
+            onDislike={() => handleLikeDislike('dislike')}
+          />
+        ) : (
+          <div style={{ color: '#aaa', padding: '40px', textAlign: 'center', gridColumn: '1 / -1' }}>
+            <h2>No videos found</h2>
+            <p>Create a playlist and add a video to get started!</p>
           </div>
-          <h1 className="video-title">{currentVideo.title}</h1>
-          <div className="video-actions">
-            <button className="action-btn" onClick={() => setLikes(likes + 1)}>
-              👍 {likes.toLocaleString()}
-            </button>
-            <button className="action-btn" onClick={() => setDislikes(dislikes + 1)}>
-              👎 {dislikes.toLocaleString()}
-            </button>
-            <button className="action-btn">↪️ Share</button>
-          </div>
-        </section>
+        )}
 
-        <section className="chat-section">
-          <div className="chat-header">Live Chat</div>
-          <div className="chat-messages">
-            {messages.map((msg) => (
-              <div key={msg.id} className="message">
-                <strong style={{ color: '#aaa', marginRight: '8px' }}>{msg.user}:</strong>
-                <span>{msg.text}</span>
-              </div>
-            ))}
-            <div ref={chatEndRef} />
-          </div>
-          <div className="chat-input">
-            <input
-              type="text"
-              placeholder="Chat..."
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleSendMessage}
-            />
-          </div>
-        </section>
-
-        <section className="description-section">
-          <div className="playlists-container">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '18px', color: '#fff', margin: 0 }}>Playlists</h3>
-              <button 
-                onClick={createPlaylist}
-                style={{ background: '#cc0000', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
-              >
-                + New Playlist
-              </button>
-            </div>
-            
-            {playlists.map((playlist) => (
-              <div key={playlist.id} style={{ marginBottom: '15px' }}>
-                <div 
-                  onClick={() => togglePlaylist(playlist.id)}
-                  style={{ 
-                    background: '#333', 
-                    padding: '10px', 
-                    borderRadius: '8px', 
-                    cursor: 'pointer',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    fontWeight: 'bold',
-                    marginBottom: '8px'
-                  }}
-                >
-                  {playlist.name}
-                  <span>{expandedPlaylists.includes(playlist.id) ? '▼' : '▶'}</span>
-                </div>
-                
-                {expandedPlaylists.includes(playlist.id) && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingLeft: '10px' }}>
-                    {playlist.videos.map((video) => (
-                      <div 
-                        key={video.id} 
-                        onClick={() => selectVideo(video)}
-                        style={{ 
-                          display: 'flex', 
-                          gap: '12px', 
-                          cursor: 'pointer',
-                          padding: '6px',
-                          borderRadius: '6px',
-                          background: currentVideo.id === video.id ? '#3f3f3f' : 'transparent',
-                          border: '1px solid #444'
-                        }}
-                      >
-                        <div style={{ width: '80px', height: '45px', background: '#000', borderRadius: '4px', flexShrink: 0 }} />
-                        <div style={{ overflow: 'hidden', display: 'flex', alignItems: 'center' }}>
-                          <div style={{ fontSize: '13px', fontWeight: '500', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                            {video.title}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); addVideo(playlist.id); }}
-                      style={{ background: 'transparent', color: '#aaa', border: '1px dashed #555', padding: '8px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', marginTop: '4px' }}
-                    >
-                      + Add Video to {playlist.name}
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
+        <PlaylistsContainer 
+          playlists={playlists}
+          isCreating={isCreatingPlaylist}
+          onStartCreate={() => setIsCreatingPlaylist(true)}
+          newPlaylistName={newPlaylistName}
+          onNewPlaylistNameChange={setNewPlaylistName}
+          onPlaylistSubmit={handlePlaylistSubmit}
+          expandedPlaylists={expandedPlaylists}
+          editingPlaylistId={editingPlaylistId}
+          onTogglePlaylist={togglePlaylist}
+          onStartEditPlaylist={startEditPlaylist}
+          onDeletePlaylist={deletePlaylist}
+          currentVideoId={currentVideo?.id}
+          onSelectVideo={selectVideo}
+          onStartAddVideo={startAddingVideo}
+          onEditVideo={startEditVideo}
+          onDeleteVideo={deleteVideo}
+          addingToPlaylist={addingToPlaylist}
+          step={step}
+          newVideoTitle={newVideoTitle}
+          newVideoLink={newVideoLink}
+          onNewVideoTitleChange={setNewVideoTitle}
+          onNewVideoLinkChange={setNewVideoLink}
+          onVideoSubmit={handleVideoSubmit}
+          editingVideoId={editingVideoId}
+        />
       </main>
     </div>
   );
