@@ -1,217 +1,37 @@
-import React, { useState, useEffect } from 'react';
+import React, { useRef } from 'react';
 import './App.css';
 import Navbar from './components/Navbar';
 import VideoPlayer from './components/VideoPlayer';
 import LiveChat from './components/LiveChat';
 import PlaylistsContainer from './components/Playlists/PlaylistsContainer';
-
-const INITIAL_DATA = [
-  {
-    id: 'pl1',
-    name: 'My Awesome Playlist',
-    videos: [
-      {
-        id: 'vid1',
-        title: 'Building a YouTube Clone with React',
-        link: 'https://youtube.com/watch?v=clone-tutorial',
-        likes: 1200,
-        dislikes: 42,
-        messages: [{ id: 'msg1', user: 'User1', text: 'Hello everyone!' }]
-      }
-    ]
-  }
-];
+import { useYouTubeData } from './hooks/useYouTubeData';
 
 function App() {
-  const [playlists, setPlaylists] = useState(() => {
-    const saved = localStorage.getItem('yt_clone_data');
-    return saved ? JSON.parse(saved) : INITIAL_DATA;
-  });
+  const { state, actions } = useYouTubeData();
+  const chatEndRef = useRef(null);
 
-  const [currentVideo, setCurrentVideo] = useState(playlists[0]?.videos[0] || null);
-  const [showChat, setShowChat] = useState(true);
-  
-  const [addingToPlaylist, setAddingToPlaylist] = useState(null);
-  const [editingVideoId, setEditingVideoId] = useState(null);
-  const [newVideoTitle, setNewVideoTitle] = useState('');
-  const [newVideoLink, setNewVideoLink] = useState('');
-  const [step, setStep] = useState(1);
-
-  const [isCreatingPlaylist, setIsCreatingPlaylist] = useState(false);
-  const [editingPlaylistId, setEditingPlaylistId] = useState(null);
-  const [newPlaylistName, setNewPlaylistName] = useState('');
-
-  useEffect(() => {
-    localStorage.setItem('yt_clone_data', JSON.stringify(playlists));
-  }, [playlists]);
-
-  const handleSendMessage = (text) => {
-    if (!currentVideo) return;
-    const newMessage = { id: 'msg' + Date.now(), user: 'You', text };
-    
-    setPlaylists(playlists.map(pl => ({
-      ...pl,
-      videos: pl.videos.map(v => v.id === currentVideo.id 
-        ? { ...v, messages: [...(v.messages || []), newMessage] } 
-        : v
-      )
-    })));
-
-    setCurrentVideo(prev => ({
-      ...prev,
-      messages: [...(prev.messages || []), newMessage]
-    }));
-  };
-
-  const handleLikeDislike = (type) => {
-    if (!currentVideo) return;
-    const newLikes = type === 'like' ? currentVideo.likes + 1 : currentVideo.likes;
-    const newDislikes = type === 'dislike' ? currentVideo.dislikes + 1 : currentVideo.dislikes;
-    
-    const updatedVideo = { ...currentVideo, likes: newLikes, dislikes: newDislikes };
-    setCurrentVideo(updatedVideo);
-
-    setPlaylists(playlists.map(pl => ({
-      ...pl,
-      videos: pl.videos.map(v => v.id === currentVideo.id ? updatedVideo : v)
-    })));
-  };
-
-  const selectVideo = (video) => {
-    setCurrentVideo(video);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const [expandedPlaylists, setExpandedPlaylists] = useState([playlists[0]?.id]);
-
-  const togglePlaylist = (id) => {
-    setExpandedPlaylists(prev => 
-      prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+  if (state.loading) {
+    return (
+      <div style={{ background: '#0f0f0f', color: 'white', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        Loading...
+      </div>
     );
-  };
-
-  const handlePlaylistSubmit = (e) => {
-    if (e.key === 'Enter' && newPlaylistName.trim()) {
-      if (editingPlaylistId) {
-        setPlaylists(playlists.map(pl => 
-          pl.id === editingPlaylistId ? { ...pl, name: newPlaylistName } : pl
-        ));
-        setEditingPlaylistId(null);
-      } else {
-        const newPl = { id: 'pl' + Date.now(), name: newPlaylistName, videos: [] };
-        setPlaylists([...playlists, newPl]);
-        setExpandedPlaylists([...expandedPlaylists, newPl.id]);
-        setIsCreatingPlaylist(false);
-      }
-      setNewPlaylistName('');
-    } else if (e.key === 'Escape') {
-      setIsCreatingPlaylist(false);
-      setEditingPlaylistId(null);
-      setNewPlaylistName('');
-    }
-  };
-
-  const deletePlaylist = (e, id) => {
-    e.stopPropagation();
-    if (window.confirm("Delete this playlist?")) {
-      const newPlaylists = playlists.filter(pl => pl.id !== id);
-      setPlaylists(newPlaylists);
-      if (currentVideo && !newPlaylists.some(pl => pl.videos.some(v => v.id === currentVideo.id))) {
-        setCurrentVideo(newPlaylists[0]?.videos[0] || null);
-      }
-    }
-  };
-
-  const startEditPlaylist = (e, pl) => {
-    e.stopPropagation();
-    setEditingPlaylistId(pl.id);
-    setNewPlaylistName(pl.name);
-  };
-
-  const startAddingVideo = (playlistId) => {
-    setAddingToPlaylist(playlistId);
-    setEditingVideoId(null);
-    setStep(1);
-    setNewVideoTitle('');
-    setNewVideoLink('');
-  };
-
-  const startEditVideo = (e, playlistId, video) => {
-    e.stopPropagation();
-    setAddingToPlaylist(playlistId);
-    setEditingVideoId(video.id);
-    setNewVideoTitle(video.title);
-    setNewVideoLink(video.link);
-    setStep(1);
-  };
-
-  const deleteVideo = (e, playlistId, videoId) => {
-    e.stopPropagation();
-    if (window.confirm("Delete this video?")) {
-      const updatedPlaylists = playlists.map(pl => 
-        pl.id === playlistId 
-          ? { ...pl, videos: pl.videos.filter(v => v.id !== videoId) } 
-          : pl
-      );
-      setPlaylists(updatedPlaylists);
-      if (currentVideo?.id === videoId) {
-        setCurrentVideo(updatedPlaylists[0]?.videos[0] || null);
-      }
-    }
-  };
-
-  const handleVideoSubmit = (e, playlistId) => {
-    if (e.key === 'Enter') {
-      if (step === 1 && newVideoTitle.trim()) {
-        setStep(2);
-      } else if (step === 2 && newVideoLink.trim()) {
-        if (editingVideoId) {
-          setPlaylists(playlists.map(pl => 
-            pl.id === playlistId ? {
-              ...pl,
-              videos: pl.videos.map(v => v.id === editingVideoId ? { ...v, title: newVideoTitle, link: newVideoLink } : v)
-            } : pl
-          ));
-        } else {
-          const newVideo = {
-            id: 'vid' + Date.now(),
-            title: newVideoTitle,
-            link: newVideoLink,
-            likes: 0,
-            dislikes: 0,
-            messages: []
-          };
-          setPlaylists(playlists.map(pl => 
-            pl.id === playlistId ? { ...pl, videos: [...pl.videos, newVideo] } : pl
-          ));
-        }
-        setAddingToPlaylist(null);
-        setEditingVideoId(null);
-        setNewVideoTitle('');
-        setNewVideoLink('');
-        setStep(1);
-      }
-    } else if (e.key === 'Escape') {
-      setAddingToPlaylist(null);
-      setEditingVideoId(null);
-      setStep(1);
-    }
-  };
+  }
 
   return (
     <div className="app-container">
       <Navbar />
 
-      <main className={`main-layout ${!showChat ? 'hide-chat' : ''}`}>
-        {currentVideo ? (
+      <main className={`main-layout ${!state.showChat ? 'hide-chat' : ''}`}>
+        {state.currentVideo ? (
           <VideoPlayer 
-            video={currentVideo}
-            likes={currentVideo.likes}
-            dislikes={currentVideo.dislikes}
-            onLike={() => handleLikeDislike('like')}
-            onDislike={() => handleLikeDislike('dislike')}
-            showChat={showChat}
-            onToggleChat={() => setShowChat(!showChat)}
+            video={state.currentVideo}
+            likes={state.currentVideo.likes}
+            dislikes={state.currentVideo.dislikes}
+            onLike={() => actions.handleLikeDislike('like')}
+            onDislike={() => actions.handleLikeDislike('dislike')}
+            showChat={state.showChat}
+            onToggleChat={() => actions.setShowChat(!state.showChat)}
           />
         ) : (
           <div style={{ color: '#aaa', padding: '40px', textAlign: 'center', gridColumn: '1 / -1' }}>
@@ -220,38 +40,39 @@ function App() {
           </div>
         )}
 
-        {showChat && currentVideo && (
+        {state.showChat && state.currentVideo && (
           <LiveChat 
-            messages={currentVideo.messages || []}
-            onSendMessage={handleSendMessage}
+            messages={state.currentVideo.messages || []}
+            onSendMessage={actions.handleSendMessage}
+            chatEndRef={chatEndRef}
           />
         )}
 
         <PlaylistsContainer 
-          playlists={playlists}
-          isCreating={isCreatingPlaylist}
-          onStartCreate={() => setIsCreatingPlaylist(true)}
-          newPlaylistName={newPlaylistName}
-          onNewPlaylistNameChange={setNewPlaylistName}
-          onPlaylistSubmit={handlePlaylistSubmit}
-          expandedPlaylists={expandedPlaylists}
-          editingPlaylistId={editingPlaylistId}
-          onTogglePlaylist={togglePlaylist}
-          onStartEditPlaylist={startEditPlaylist}
-          onDeletePlaylist={deletePlaylist}
-          currentVideoId={currentVideo?.id}
-          onSelectVideo={selectVideo}
-          onStartAddVideo={startAddingVideo}
-          onEditVideo={startEditVideo}
-          onDeleteVideo={deleteVideo}
-          addingToPlaylist={addingToPlaylist}
-          step={step}
-          newVideoTitle={newVideoTitle}
-          newVideoLink={newVideoLink}
-          onNewVideoTitleChange={setNewVideoTitle}
-          onNewVideoLinkChange={setNewVideoLink}
-          onVideoSubmit={handleVideoSubmit}
-          editingVideoId={editingVideoId}
+          playlists={state.playlists}
+          isCreating={state.isCreatingPlaylist}
+          onStartCreate={() => actions.setIsCreatingPlaylist(true)}
+          newPlaylistName={state.newPlaylistName}
+          onNewPlaylistNameChange={actions.setNewPlaylistName}
+          onPlaylistSubmit={actions.handlePlaylistSubmit}
+          expandedPlaylists={state.expandedPlaylists}
+          editingPlaylistId={state.editingPlaylistId}
+          onTogglePlaylist={actions.togglePlaylist}
+          onStartEditPlaylist={actions.startEditPlaylist}
+          onDeletePlaylist={actions.deletePlaylist}
+          currentVideoId={state.currentVideo?.id}
+          onSelectVideo={actions.selectVideo}
+          onStartAddVideo={actions.startAddingVideo}
+          onEditVideo={actions.startEditVideo}
+          onDeleteVideo={actions.deleteVideo}
+          addingToPlaylist={state.addingToPlaylist}
+          step={state.step}
+          newVideoTitle={state.newVideoTitle}
+          newVideoLink={state.newVideoLink}
+          onNewVideoTitleChange={actions.setNewVideoTitle}
+          onNewVideoLinkChange={actions.setNewVideoLink}
+          onVideoSubmit={actions.handleVideoSubmit}
+          editingVideoId={state.editingVideoId}
         />
       </main>
     </div>
