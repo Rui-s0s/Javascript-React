@@ -1,0 +1,187 @@
+.descriptionSection {
+  grid-column: 1;
+  grid-row: 2;
+  background-color: #272727;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.title {
+  font-size: 18px;
+  color: #fff;
+  margin: 0;
+}
+
+.newBtn {
+  background: #cc0000;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+/* Playlist Item Styles */
+.playlistContainer {
+  margin-bottom: 15px;
+}
+
+.playlistHeader {
+  background: #333;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.headerActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.videoList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 10px;
+}
+
+/* Video Item Styles */
+.videoItem {
+  display: flex;
+  gap: 12px;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid #444;
+}
+
+.thumbnail {
+  width: 80px;
+  height: 45px;
+  background: #000;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.videoInfo {
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  justify-content: space-between;
+}
+
+.videoTitle {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+/* Common UI Components */
+.iconBtn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  opacity: 0.6;
+  transition: opacity 0.2s, background-color 0.2s;
+}
+
+.iconBtn:hover {
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.inlineInput {
+  width: 100%;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  padding: 10px;
+  border-radius: 6px;
+  color: white;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.inlineInput:focus {
+  outline: none;
+  border-color: #cc0000;
+}
+
+.addVideoBtn {
+  background: transparent;
+  color: #aaa;
+  border: 1px dashed #555;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.formFooter {
+  font-size: 10px;
+  color: #888;
+  margin-top: 4px;
+}
+
+@media (max-width: 600px) {
+  .descriptionSection {
+    padding: 12px;
+  }
+  
+  .title {
+    font-size: 16px;
+  }
+  
+  .newBtn {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+  
+  .playlistHeader {
+    font-size: 14px;
+    padding: 8px;
+  }
+  
+  .videoTitle {
+    font-size: 12px;
+  }
+  
+  .thumbnail {
+    width: 60px;
+    height: 34px;
+  }
+  
+  .inlineInput {
+    padding: 8px;
+    font-size: 13px;
+  }
+  
+  .addVideoBtn {
+    font-size: 11px;
+    padding: 6px;
+  }
+}
