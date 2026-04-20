@@ -22,7 +22,6 @@
   transition: all 0.3s ease;
 }
 
-/* Ensure grid items don't push the container width */
 .main-layout > * {
   min-width: 0;
 }

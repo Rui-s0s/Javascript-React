@@ -15,7 +15,6 @@
   font-size: 18px;
   border: 1px solid #333;
   overflow: hidden;
-  /* Prevent content from pushing out */
 }
 
 .placeholderContent {
@@ -47,7 +46,7 @@
 }
 
 .title {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: bold;
   margin: 12px 0;
   color: #fff;
@@ -84,12 +83,12 @@
   .title {
     font-size: 20px;
   }
-
+  
   .actionBtn {
     padding: 6px 10px;
     font-size: 11px;
   }
-
+  
   .placeholder {
     font-size: 14px;
   }

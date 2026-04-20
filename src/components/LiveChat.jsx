@@ -1,8 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styles from './LiveChat.module.css';
 
-const LiveChat = ({ messages, onSendMessage, chatEndRef }) => {
+const LiveChat = ({ messages, onSendMessage }) => {
   const [localInput, setLocalInput] = useState('');
+  const messagesEndRef = useRef(null);
+
+  // Internal scroll logic that only affects this container
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [messages]);
 
   const handleSend = () => {
     if (localInput.trim()) {
@@ -21,7 +29,8 @@ const LiveChat = ({ messages, onSendMessage, chatEndRef }) => {
             <span style={{ fontSize: '0.95em' }}>{msg.text}</span>
           </div>
         ))}
-        <div ref={chatEndRef} />
+        {/* Dummy div to anchor the scroll */}
+        <div ref={messagesEndRef} />
       </div>
       <div className={styles.inputArea}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

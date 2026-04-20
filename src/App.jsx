@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import Navbar from './components/Navbar';
 import VideoPlayer from './components/VideoPlayer';
+import LiveChat from './components/LiveChat';
 import PlaylistsContainer from './components/Playlists/PlaylistsContainer';
 
 const INITIAL_DATA = [
@@ -14,7 +15,8 @@ const INITIAL_DATA = [
         title: 'Building a YouTube Clone with React',
         link: 'https://youtube.com/watch?v=clone-tutorial',
         likes: 1200,
-        dislikes: 42
+        dislikes: 42,
+        messages: [{ id: 'msg1', user: 'User1', text: 'Hello everyone!' }]
       }
     ]
   }
@@ -27,6 +29,7 @@ function App() {
   });
 
   const [currentVideo, setCurrentVideo] = useState(playlists[0]?.videos[0] || null);
+  const [showChat, setShowChat] = useState(true);
   
   const [addingToPlaylist, setAddingToPlaylist] = useState(null);
   const [editingVideoId, setEditingVideoId] = useState(null);
@@ -41,6 +44,24 @@ function App() {
   useEffect(() => {
     localStorage.setItem('yt_clone_data', JSON.stringify(playlists));
   }, [playlists]);
+
+  const handleSendMessage = (text) => {
+    if (!currentVideo) return;
+    const newMessage = { id: 'msg' + Date.now(), user: 'You', text };
+    
+    setPlaylists(playlists.map(pl => ({
+      ...pl,
+      videos: pl.videos.map(v => v.id === currentVideo.id 
+        ? { ...v, messages: [...(v.messages || []), newMessage] } 
+        : v
+      )
+    })));
+
+    setCurrentVideo(prev => ({
+      ...prev,
+      messages: [...(prev.messages || []), newMessage]
+    }));
+  };
 
   const handleLikeDislike = (type) => {
     if (!currentVideo) return;
@@ -61,13 +82,13 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const [expandedPlaylists, setExpandedPlaylists] = useState([playlists[0]?.id]);
+
   const togglePlaylist = (id) => {
     setExpandedPlaylists(prev => 
       prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
     );
   };
-  
-  const [expandedPlaylists, setExpandedPlaylists] = useState([playlists[0]?.id]);
 
   const handlePlaylistSubmit = (e) => {
     if (e.key === 'Enter' && newPlaylistName.trim()) {
@@ -157,7 +178,8 @@ function App() {
             title: newVideoTitle,
             link: newVideoLink,
             likes: 0,
-            dislikes: 0
+            dislikes: 0,
+            messages: []
           };
           setPlaylists(playlists.map(pl => 
             pl.id === playlistId ? { ...pl, videos: [...pl.videos, newVideo] } : pl
@@ -180,7 +202,7 @@ function App() {
     <div className="app-container">
       <Navbar />
 
-      <main className="main-layout hide-chat">
+      <main className={`main-layout ${!showChat ? 'hide-chat' : ''}`}>
         {currentVideo ? (
           <VideoPlayer 
             video={currentVideo}
@@ -188,12 +210,21 @@ function App() {
             dislikes={currentVideo.dislikes}
             onLike={() => handleLikeDislike('like')}
             onDislike={() => handleLikeDislike('dislike')}
+            showChat={showChat}
+            onToggleChat={() => setShowChat(!showChat)}
           />
         ) : (
           <div style={{ color: '#aaa', padding: '40px', textAlign: 'center', gridColumn: '1 / -1' }}>
             <h2>No videos found</h2>
             <p>Create a playlist and add a video to get started!</p>
           </div>
+        )}
+
+        {showChat && currentVideo && (
+          <LiveChat 
+            messages={currentVideo.messages || []}
+            onSendMessage={handleSendMessage}
+          />
         )}
 
         <PlaylistsContainer 
