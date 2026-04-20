@@ -1,71 +1,41 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 
-const PLAYLIST = [
+const INITIAL_DATA = [
   {
-    id: 1,
-    title: '1. Building a YouTube Clone with React and CSS Grid',
-    description: 'In this video, we explore how to use CSS Grid to create complex layouts like YouTube. We\'ll cover grid-column, grid-row, and responsive design patterns.',
-    views: '1,200,432',
-    time: '2 hours ago',
-    likes: 1200,
-    dislikes: 42,
-    messages: [
-      { id: 1, user: 'User1', text: 'Hello everyone!' },
-      { id: 2, user: 'DevGemini', text: 'This layout looks great!' },
-      { id: 3, user: 'User2', text: 'Is this React?' },
-    ]
-  },
-  {
-    id: 2,
-    title: '2. Mastering Flexbox for Modern Web Design',
-    description: 'Flexbox is essential for one-dimensional layouts. Learn how to align items, justify content, and handle wrapping like a pro.',
-    views: '850,000',
-    time: '1 day ago',
-    likes: 8500,
-    dislikes: 120,
-    messages: [
-      { id: 1, user: 'FlexFan', text: 'Flexbox changed my life.' },
-      { id: 2, user: 'CSS_Wizard', text: 'Grid + Flexbox is the way to go.' },
-    ]
-  },
-  {
-    id: 3,
-    title: '3. Advanced State Management in React',
-    description: 'Dive deep into hooks, context API, and when to reach for external libraries like Redux or Zustand.',
-    views: '45,210',
-    time: '5 mins ago',
-    likes: 450,
-    dislikes: 5,
-    messages: [
-      { id: 1, user: 'StateMaster', text: 'Hooks are so much cleaner.' },
-      { id: 2, user: 'Newbie', text: 'This is a bit hard to follow but useful!' },
+    id: 'pl1',
+    name: 'Frontend Development',
+    videos: [
+      {
+        id: 1,
+        title: '1. Building a YouTube Clone with React and CSS Grid',
+        likes: 1200,
+        dislikes: 42,
+        messages: [{ id: 1, user: 'User1', text: 'Hello everyone!' }]
+      }
     ]
   }
 ];
 
 function App() {
-  const [currentVideo, setCurrentVideo] = useState(PLAYLIST[0]);
-  const [messages, setMessages] = useState(PLAYLIST[0].messages);
-  const [likes, setLikes] = useState(PLAYLIST[0].likes);
-  const [dislikes, setDislikes] = useState(PLAYLIST[0].dislikes);
+  const [playlists, setPlaylists] = useState(INITIAL_DATA);
+  const [currentVideo, setCurrentVideo] = useState(INITIAL_DATA[0].videos[0]);
+  const [messages, setMessages] = useState(currentVideo.messages);
+  const [likes, setLikes] = useState(currentVideo.likes);
+  const [dislikes, setDislikes] = useState(currentVideo.dislikes);
   const [inputValue, setInputValue] = useState('');
+  const [expandedPlaylists, setExpandedPlaylists] = useState(['pl1']);
   
   const chatEndRef = useRef(null);
 
-  // Update local state when currentVideo changes
   useEffect(() => {
     setMessages(currentVideo.messages);
     setLikes(currentVideo.likes);
     setDislikes(currentVideo.dislikes);
   }, [currentVideo]);
 
-  const scrollToBottom = () => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   useEffect(() => {
-    scrollToBottom();
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   const handleSendMessage = (e) => {
@@ -80,6 +50,41 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const togglePlaylist = (id) => {
+    setExpandedPlaylists(prev => 
+      prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+    );
+  };
+
+  const createPlaylist = () => {
+    const name = prompt("Enter playlist name:");
+    if (name) {
+      const newPl = {
+        id: 'pl' + Date.now(),
+        name: name,
+        videos: []
+      };
+      setPlaylists([...playlists, newPl]);
+      setExpandedPlaylists([...expandedPlaylists, newPl.id]);
+    }
+  };
+
+  const addVideo = (playlistId) => {
+    const title = prompt("Enter video title:");
+    if (title) {
+      const newVideo = {
+        id: Date.now(),
+        title: title,
+        likes: 0,
+        dislikes: 0,
+        messages: []
+      };
+      setPlaylists(playlists.map(pl => 
+        pl.id === playlistId ? { ...pl, videos: [...pl.videos, newVideo] } : pl
+      ));
+    }
+  };
+
   return (
     <div className="app-container">
       <nav className="navbar">
@@ -92,7 +97,7 @@ function App() {
         <section className="video-section">
           <div className="video-placeholder">
             <div style={{ textAlign: 'center' }}>
-               ▶️ Now Playing: {currentVideo.title}
+               ▶️ {currentVideo.title}
             </div>
           </div>
           <h1 className="video-title">{currentVideo.title}</h1>
@@ -104,7 +109,6 @@ function App() {
               👎 {dislikes.toLocaleString()}
             </button>
             <button className="action-btn">↪️ Share</button>
-            <button className="action-btn">⬇️ Download</button>
           </div>
         </section>
 
@@ -131,41 +135,71 @@ function App() {
         </section>
 
         <section className="description-section">
-          <div className="description-content">
-            <strong>{currentVideo.views} views • {currentVideo.time}</strong>
-            <p style={{ marginTop: '12px', borderBottom: '1px solid #444', paddingBottom: '16px' }}>
-              {currentVideo.description}
-            </p>
-            
-            <div className="playlist-area" style={{ marginTop: '20px' }}>
-              <h3 style={{ fontSize: '16px', marginBottom: '12px', color: '#fff' }}>Playlist</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {PLAYLIST.map((video) => (
-                  <div 
-                    key={video.id} 
-                    onClick={() => selectVideo(video)}
-                    style={{ 
-                      display: 'flex', 
-                      gap: '12px', 
-                      cursor: 'pointer',
-                      padding: '8px',
-                      borderRadius: '8px',
-                      background: currentVideo.id === video.id ? '#3f3f3f' : 'transparent',
-                      border: '1px solid #444'
-                    }}
-                    className="playlist-item"
-                  >
-                    <div style={{ width: '120px', height: '67px', background: '#000', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px' }}>
-                      Thumbnail {video.id}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#fff' }}>{video.title}</div>
-                      <div style={{ fontSize: '12px', color: '#aaa' }}>{video.views} views</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+          <div className="playlists-container">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '18px', color: '#fff', margin: 0 }}>Playlists</h3>
+              <button 
+                onClick={createPlaylist}
+                style={{ background: '#cc0000', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
+              >
+                + New Playlist
+              </button>
             </div>
+            
+            {playlists.map((playlist) => (
+              <div key={playlist.id} style={{ marginBottom: '15px' }}>
+                <div 
+                  onClick={() => togglePlaylist(playlist.id)}
+                  style={{ 
+                    background: '#333', 
+                    padding: '10px', 
+                    borderRadius: '8px', 
+                    cursor: 'pointer',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    fontWeight: 'bold',
+                    marginBottom: '8px'
+                  }}
+                >
+                  {playlist.name}
+                  <span>{expandedPlaylists.includes(playlist.id) ? '▼' : '▶'}</span>
+                </div>
+                
+                {expandedPlaylists.includes(playlist.id) && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingLeft: '10px' }}>
+                    {playlist.videos.map((video) => (
+                      <div 
+                        key={video.id} 
+                        onClick={() => selectVideo(video)}
+                        style={{ 
+                          display: 'flex', 
+                          gap: '12px', 
+                          cursor: 'pointer',
+                          padding: '6px',
+                          borderRadius: '6px',
+                          background: currentVideo.id === video.id ? '#3f3f3f' : 'transparent',
+                          border: '1px solid #444'
+                        }}
+                      >
+                        <div style={{ width: '80px', height: '45px', background: '#000', borderRadius: '4px', flexShrink: 0 }} />
+                        <div style={{ overflow: 'hidden', display: 'flex', alignItems: 'center' }}>
+                          <div style={{ fontSize: '13px', fontWeight: '500', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                            {video.title}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); addVideo(playlist.id); }}
+                      style={{ background: 'transparent', color: '#aaa', border: '1px dashed #555', padding: '8px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', marginTop: '4px' }}
+                    >
+                      + Add Video to {playlist.name}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </section>
       </main>
