@@ -1,16 +1,33 @@
-# React + Vite
+# Video Playlist Maker
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A simple yet functional video playlist application where you can manage your favorite videos, track likes/dislikes, and participate in live chats for each video.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Playlist Management:** Create, edit, and delete playlists.
+- **Video Organization:** Add videos to specific playlists with custom titles and links.
+- **Interactivity:** Like or dislike videos.
+- **Live Chat:** Real-time simulated chat for every video.
+- **Persistence:** Your data is saved locally using `localStorage`.
 
-## React Compiler
+## Branch Structure
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+This project demonstrates the same application built with different technologies:
 
-## Expanding the ESLint configuration
+- **`main` Branch:** The **React** version of the project.
+- **`plain` Branch (Current):** The **Vanilla JavaScript** version, built from scratch without any external UI libraries.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Getting Started
+
+1. Clone the repository.
+2. Ensure you are on the desired branch (`git checkout plain` for Vanilla JS).
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
+5. Open your browser to the provided local URL.
+
