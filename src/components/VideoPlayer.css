@@ -4,7 +4,7 @@
   box-sizing: border-box;
 }
 
-.placeholder {
+.video-placeholder {
   width: 100%;
   aspect-ratio: 16 / 9;
   background-color: #000;
@@ -45,7 +45,7 @@
   max-width: 100%;
 }
 
-.title {
+.video-title {
   font-size: 20px;
   font-weight: bold;
   margin: 12px 0;
@@ -80,7 +80,7 @@
 }
 
 @media (max-width: 600px) {
-  .title {
+  .video-title {
     font-size: 20px;
   }
   
@@ -89,7 +89,7 @@
     font-size: 11px;
   }
   
-  .placeholder {
+  .video-placeholder {
     font-size: 14px;
   }
 }

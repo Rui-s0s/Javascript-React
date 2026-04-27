@@ -1,4 +1,4 @@
-.descriptionSection {
+.description-section {
   grid-column: 1;
   grid-row: 2;
   background-color: #272727;
@@ -86,7 +86,7 @@
   justify-content: space-between;
 }
 
-.videoTitle {
+.video-title {
   font-size: 13px;
   font-weight: 500;
   white-space: nowrap;
@@ -130,7 +130,7 @@
   border-color: #cc0000;
 }
 
-.addVideoBtn {
+.add-video-btn {
   background: transparent;
   color: #aaa;
   border: 1px dashed #555;
@@ -141,14 +141,14 @@
   margin-top: 4px;
 }
 
-.formFooter {
+.form-footer {
   font-size: 10px;
   color: #888;
   margin-top: 4px;
 }
 
 @media (max-width: 600px) {
-  .descriptionSection {
+  .description-section {
     padding: 12px;
   }
   
@@ -166,7 +166,7 @@
     padding: 8px;
   }
   
-  .videoTitle {
+  .video-title {
     font-size: 12px;
   }
   
@@ -180,7 +180,7 @@
     font-size: 13px;
   }
   
-  .addVideoBtn {
+  .add-video-btn {
     font-size: 11px;
     padding: 6px;
   }
