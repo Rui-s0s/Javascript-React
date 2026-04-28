@@ -6,14 +6,14 @@ export class VideoPlayer {
     this.props = props;
     this.container = document.createElement('section');
     this.container.className = 'videoSection'; // video-section
-    
+
     this.render();
   }
 
   // Logic: Copy to clipboard
   handleShare() {
-    if (this.props.video?.link) {
-      navigator.clipboard.writeText(this.props.video.link)
+    if (this.props.video?.url) {
+      navigator.clipboard.writeText(this.props.video.url)
         .then(() => alert('Link copied to clipboard!'))
         .catch(err => console.error('Failed to copy: ', err));
     }
@@ -33,11 +33,11 @@ export class VideoPlayer {
         <div class="placeholderContent">
           <div class="playIcon">▶️</div>
           <div class="nowPlaying">${video.title}</div>
-          <div class="videoLink">${video.link}</div>
+          <div class="videoLink">${video.url}</div>
         </div>
       </div>
       <h1 class="video-title">${video.title}</h1>
-      
+
       <div class="actions">
         <button class="actionBtn" id="like-btn">
           👍 ${likes.toLocaleString()}

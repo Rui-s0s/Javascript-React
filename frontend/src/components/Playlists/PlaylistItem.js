@@ -45,7 +45,8 @@ export class PlaylistItem {
       const videoItem = e.target.closest('.videoItem');
       if (videoItem && !e.target.closest('.headerActions')) {
         const videoId = videoItem.dataset.videoId;
-        const video = playlist.videos.find(v => v.id === videoId);
+        // Backend IDs are Long (numbers), frontend might have them as strings from DOM
+        const video = playlist.videos.find(v => v.id.toString() === videoId.toString());
         if (video) onSelectVideo(video);
       }
 
@@ -54,7 +55,7 @@ export class PlaylistItem {
       if (editVideoBtn) {
         e.stopPropagation();
         const videoId = editVideoBtn.closest('.videoItem').dataset.videoId;
-        const video = playlist.videos.find(v => v.id === videoId);
+        const video = playlist.videos.find(v => v.id.toString() === videoId.toString());
         if (video) onEditVideo(e, playlist.id, video);
       }
 
@@ -88,7 +89,7 @@ export class PlaylistItem {
     const { 
       playlist, isExpanded, isEditing, editingName, 
       currentVideoId, addingToPlaylist, step, 
-      newVideoTitle, newVideoLink, editingVideoId 
+      newVideoTitle, newVideoUrl, editingVideoId 
     } = this.props;
 
     // 1. Template for the Header (Editing vs Viewing)
@@ -123,8 +124,10 @@ export class PlaylistItem {
       const addFormHtml = (addingToPlaylist === playlist.id) ? `
         <div style="margin-top: 8px;">
           <input type="text" class="inlineInput video-input" autofocus
-            placeholder="${step === 1 ? (editingVideoId ? "Edit title" : `Add title to ${playlist.name}`) : `Add link to ${newVideoTitle}`}"
-            value="${step === 1 ? newVideoTitle : newVideoLink}"
+            placeholder="${step === 1 
+              ? (editingVideoId ? `Edit title for ${editingName || 'video'}` : `Add title to ${playlist.name}`)
+              : (editingVideoId ? `Edit URL for ${newVideoTitle || 'video'}` : `Add URL for ${newVideoTitle || 'video'}`)}"
+            value="${step === 1 ? newVideoTitle : newVideoUrl}"
             style="border-color: #cc0000;">
           <div class="form-footer">Press Enter to ${step === 1 ? 'continue' : 'finish'}, Esc to cancel</div>
         </div>
@@ -136,7 +139,7 @@ export class PlaylistItem {
     }
 
     this.container.innerHTML = `${headerHtml}${bodyHtml}`;
-    
+
     // Auto-focus logic (standard JS equivalent to React's autoFocus prop)
     const activeInput = this.container.querySelector('input[autofocus]');
     if (activeInput) setTimeout(() => activeInput.focus(), 0);

@@ -81,7 +81,7 @@ export class PlaylistsContainer {
       addingToPlaylist: this.props.addingToPlaylist,
       step: this.props.step,
       newVideoTitle: this.props.newVideoTitle,
-      newVideoLink: this.props.newVideoLink,
+      newVideoUrl: this.props.newVideoUrl,
       editingVideoId: this.props.editingVideoId,
       onEditSubmit: this.props.onPlaylistSubmit
     });
