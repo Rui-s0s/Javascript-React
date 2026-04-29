@@ -74,4 +74,4 @@ public class PlaylistController {
         playlist.removeVideo(videoToRemove);
         playlistRepository.save(playlist);
     }
-    }
+}
