@@ -3,8 +3,8 @@ import styles from './VideoPlayer.module.css';
 
 const VideoPlayer = ({ video, likes, dislikes, onLike, onDislike, showChat, onToggleChat }) => {
   const handleShare = () => {
-    if (video?.link) {
-      navigator.clipboard.writeText(video.link)
+    if (video?.url) {
+      navigator.clipboard.writeText(video.url)
         .then(() => alert('Link copied to clipboard!'))
         .catch(err => console.error('Failed to copy: ', err));
     }
@@ -16,7 +16,7 @@ const VideoPlayer = ({ video, likes, dislikes, onLike, onDislike, showChat, onTo
         <div className={styles.placeholderContent}>
           <div className={styles.playIcon}>▶️</div>
           <div className={styles.nowPlaying}>{video.title}</div>
-          <div className={styles.videoLink}>{video.link}</div>
+          <div className={styles.videoLink}>{video.url}</div>
         </div>
       </div>
       <h1 className={styles.title}>{video.title}</h1>
