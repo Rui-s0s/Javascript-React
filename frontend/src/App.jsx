@@ -26,8 +26,8 @@ function App() {
         {state.currentVideo ? (
           <VideoPlayer 
             video={state.currentVideo}
-            likes={state.currentVideo.likes}
-            dislikes={state.currentVideo.dislikes}
+            likes={state.currentVideo.likes || 0}
+            dislikes={state.currentVideo.dislikes || 0}
             onLike={() => actions.handleLikeDislike('like')}
             onDislike={() => actions.handleLikeDislike('dislike')}
             showChat={state.showChat}
@@ -42,7 +42,7 @@ function App() {
 
         {state.showChat && state.currentVideo && (
           <LiveChat 
-            messages={state.currentVideo.messages || []}
+            messages={state.currentVideo.comments || []}
             onSendMessage={actions.handleSendMessage}
             chatEndRef={chatEndRef}
           />

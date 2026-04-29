@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 
-const API_BASE = '/api';
+// Make sure this matches your Vite proxy or Spring server URL
+const API_BASE = '/api'; 
 
 export function useYouTubeData() {
   const [playlists, setPlaylists] = useState([]);
@@ -12,7 +13,7 @@ export function useYouTubeData() {
   const [addingToPlaylist, setAddingToPlaylist] = useState(null);
   const [editingVideoId, setEditingVideoId] = useState(null);
   const [newVideoTitle, setNewVideoTitle] = useState('');
-  const [newVideoLink, setNewVideoLink] = useState('');
+  const [newVideoLink, setNewVideoLink] = useState(''); // Maps to 'url' in Spring
   const [step, setStep] = useState(1);
 
   // Playlist Form State
@@ -22,18 +23,30 @@ export function useYouTubeData() {
 
   const [expandedPlaylists, setExpandedPlaylists] = useState([]);
 
+  // 1. Fetch All Playlists (Spring returns a List<Playlist>)
   const fetchData = async () => {
     try {
-      const res = await fetch(`${API_BASE}/data`);
+      const res = await fetch(`${API_BASE}/playlists`);
       const data = await res.json();
       setPlaylists(data);
-      if (data.length > 0 && !currentVideo) {
-        const firstVideo = data[0].videos[0];
-        if (firstVideo) setCurrentVideo(firstVideo);
+      
+      // If we are currently watching a video, find its NEW version in the data
+      if (currentVideo) {
+        const freshVideo = data
+          .flatMap(pl => pl.videos)
+          .find(v => v.id === currentVideo.id);
+        
+        if (freshVideo) {
+          setCurrentVideo(freshVideo); // This forces likes/comments to update
+        }
+      } else if (data.length > 0) {
+        const firstPlaylistWithVideos = data.find(pl => pl.videos?.length > 0);
+        if (firstPlaylistWithVideos) setCurrentVideo(firstPlaylistWithVideos.videos[0]);
       }
+      
       setLoading(false);
     } catch (err) {
-      console.error("Backend error:", err);
+      console.error("Spring Backend error:", err);
       setLoading(false);
     }
   };
@@ -42,37 +55,32 @@ export function useYouTubeData() {
     fetchData();
   }, []);
 
-  // Sync currentVideo whenever playlists change
-  useEffect(() => {
-    if (currentVideo) {
-      const updatedVideo = playlists.flatMap(pl => pl.videos).find(v => v.id === currentVideo.id);
-      if (updatedVideo && JSON.stringify(updatedVideo) !== JSON.stringify(currentVideo)) {
-        setCurrentVideo(updatedVideo);
-      }
-    }
-  }, [playlists]);
-
+  // 2. Add Comment (Updated for Spring /comments endpoint)
   const handleSendMessage = async (text) => {
     if (!currentVideo) return;
-    const res = await fetch(`${API_BASE}/videos/${currentVideo.id}/messages`, {
+    const res = await fetch(`${API_BASE}/videos/${currentVideo.id}/comments`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text })
+      body: JSON.stringify({ 
+        text: text,
+        author: "User" // Spring expects an author field
+      })
     });
-    if (res.ok) fetchData();
+    if (res.ok) await fetchData();
   };
 
+  // 3. Like/Dislike (Updated for Spring @PatchMapping)
   const handleLikeDislike = async (type) => {
     if (!currentVideo) return;
-    const newLikes = type === 'like' ? currentVideo.likes + 1 : currentVideo.likes;
-    const newDislikes = type === 'dislike' ? currentVideo.dislikes + 1 : currentVideo.dislikes;
+    const endpoint = type === 'like' ? 'like' : 'dislike';
     
-    await fetch(`${API_BASE}/videos/${currentVideo.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ likes: newLikes, dislikes: newDislikes })
+    const res = await fetch(`${API_BASE}/videos/${currentVideo.id}/${endpoint}`, {
+      method: 'PATCH'
     });
-    fetchData();
+
+    if (res.ok) {
+      await fetchData(); // This now has a 'res' to check!
+    }
   };
 
   const selectVideo = (video) => {
@@ -86,6 +94,7 @@ export function useYouTubeData() {
     );
   };
 
+  // 4. Playlist Submission (Spring paths)
   const handlePlaylistSubmit = async (e) => {
     if (e.key === 'Enter' && newPlaylistName.trim()) {
       const url = editingPlaylistId ? `${API_BASE}/playlists/${editingPlaylistId}` : `${API_BASE}/playlists`;
@@ -101,7 +110,7 @@ export function useYouTubeData() {
         setIsCreatingPlaylist(false);
         setEditingPlaylistId(null);
         setNewPlaylistName('');
-        fetchData();
+        await fetchData();
       }
     } else if (e.key === 'Escape') {
       setIsCreatingPlaylist(false);
@@ -113,11 +122,49 @@ export function useYouTubeData() {
   const deletePlaylist = async (e, id) => {
     e.stopPropagation();
     if (window.confirm("Delete this playlist?")) {
-      await fetch(`${API_BASE}/playlists/${id}`, { method: 'DELETE' });
-      fetchData();
+      const res = await fetch(`${API_BASE}/playlists/${id}`, { method: 'DELETE' });
+      // Important: Spring returns 204 No Content, don't try to .json() it
+      if (res.ok) await fetchData();
     }
   };
 
+  // 5. Video Submission (Maps 'link' to 'url')
+  const handleVideoSubmit = async (e, playlistId) => {
+    if (e.key === 'Enter') {
+      if (step === 1 && newVideoTitle.trim()) {
+        setStep(2);
+      } else if (step === 2 && newVideoLink.trim()) {
+        const url = editingVideoId 
+          ? `${API_BASE}/videos/${editingVideoId}` 
+          : `${API_BASE}/playlists/${playlistId}/videos`;
+        const method = editingVideoId ? 'PUT' : 'POST';
+        
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            title: newVideoTitle, 
+            url: newVideoLink // Changed from 'link' to 'url'
+          })
+        });
+
+        if (res.ok) {
+          setAddingToPlaylist(null);
+          setEditingVideoId(null);
+          setNewVideoTitle('');
+          setNewVideoLink('');
+          setStep(1);
+          await fetchData();
+        }
+      }
+    } else if (e.key === 'Escape') {
+      setAddingToPlaylist(null);
+      setEditingVideoId(null);
+      setStep(1);
+    }
+  };
+
+  // Helper logic for video editing/deletion
   const startEditPlaylist = (e, pl) => {
     e.stopPropagation();
     setEditingPlaylistId(pl.id);
@@ -137,45 +184,25 @@ export function useYouTubeData() {
     setAddingToPlaylist(playlistId);
     setEditingVideoId(video.id);
     setNewVideoTitle(video.title);
-    setNewVideoLink(video.link);
+    setNewVideoLink(video.url); // Use .url from Spring
     setStep(1);
   };
 
   const deleteVideo = async (e, playlistId, videoId) => {
     e.stopPropagation();
     if (window.confirm("Delete this video?")) {
-      await fetch(`${API_BASE}/videos/${videoId}`, { method: 'DELETE' });
-      fetchData();
-    }
-  };
+      const res = await fetch(`${API_BASE}/playlists/${playlistId}/videos/${videoId}`, { 
+        method: 'DELETE' 
+      });
 
-  const handleVideoSubmit = async (e, playlistId) => {
-    if (e.key === 'Enter') {
-      if (step === 1 && newVideoTitle.trim()) {
-        setStep(2);
-      } else if (step === 2 && newVideoLink.trim()) {
-        const url = editingVideoId ? `${API_BASE}/videos/${editingVideoId}` : `${API_BASE}/playlists/${playlistId}/videos`;
-        const method = editingVideoId ? 'PUT' : 'POST';
-        
-        const res = await fetch(url, {
-          method,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title: newVideoTitle, link: newVideoLink })
-        });
-
-        if (res.ok) {
-          setAddingToPlaylist(null);
-          setEditingVideoId(null);
-          setNewVideoTitle('');
-          setNewVideoLink('');
-          setStep(1);
-          fetchData();
+      if (res.ok) {
+        // If the video being deleted is the one on screen, clear it
+        // We use String() to be safe since Spring IDs are numbers
+        if (currentVideo && String(currentVideo.id) === String(videoId)) {
+          setCurrentVideo(null); 
         }
+        await fetchData();
       }
-    } else if (e.key === 'Escape') {
-      setAddingToPlaylist(null);
-      setEditingVideoId(null);
-      setStep(1);
     }
   };
 
