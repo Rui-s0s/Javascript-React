@@ -1,16 +1,65 @@
-# React + Vite
+# Video Playlist Maker (Full Stack)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A comprehensive full-stack application for managing video playlists, tracking engagement (likes/dislikes), and participating in real-time discussions.
 
-Currently, two official plugins are available:
+## Project Structure
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+The project is organized into two main components:
 
-## React Compiler
+### [Frontend](./frontend)
+- **Technology:** React (Vite)
+- **Features:**
+  - Modern, component-based UI.
+  - Integration with the Spring Boot API.
+  - Interactive video player and live chat interface.
+  - Responsive design for various screen sizes.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### [Backend](./backend)
+- **Technology:** Java, Spring Boot
+- **Features:**
+  - RESTful API for managing playlists, videos, and comments.
+  - Data persistence (H2/MySQL as configured in `application.properties`).
+  - Controllers for handling complex business logic.
+  - Entity-relationship mapping for Playlists, Videos, and Comments.
 
-## Expanding the ESLint configuration
+## Branch Versions
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- **`main` Branch:** Features the full-stack version with **React** frontend and **Spring Boot** backend.
+- **`plain` Branch:** Features a standalone **Vanilla JavaScript** version of the frontend (ideal for learning DOM manipulation).
+
+## Getting Started
+
+### Prerequisites
+- Node.js & npm (for Frontend)
+- JDK 17+ & Maven (for Backend)
+
+### Running the Backend
+1. Navigate to the `backend` directory:
+   ```bash
+   cd backend
+   ```
+2. Run the Spring Boot application:
+   ```bash
+   ./mvnw spring-boot:run
+   ```
+
+### Running the Frontend
+1. Navigate to the `frontend` directory:
+   ```bash
+   cd frontend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+## API Endpoints
+- `GET /api/playlists`: Fetch all playlists.
+- `POST /api/playlists`: Create a new playlist.
+- `GET /api/videos/{id}`: Get video details.
+- `PATCH /api/videos/{id}/like`: Like a video.
+- ... and more (see controllers for details).
