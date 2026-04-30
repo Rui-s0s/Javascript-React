@@ -20,14 +20,26 @@ This project demonstrates the same application built with different technologies
 ## Getting Started
 
 1. Clone the repository.
+
 2. Ensure you are on the desired branch (`git checkout plain` for Vanilla JS).
-3. Install dependencies:
+
+3. Navigate to the `backend` directory:
+   ```bash
+   cd backend
+   ```
+4. Run the Spring Boot application:
+   ```bash
+   ./mvnw spring-boot:run
+   ```
+5. Navigate to the `frontend` directory:
+   ```bash
+   cd frontend
+   ```
+6. Install dependencies:
    ```bash
    npm install
    ```
-4. Run the development server:
+7. Start the development server:
    ```bash
    npm run dev
    ```
-5. Open your browser to the provided local URL.
-
