@@ -27,6 +27,7 @@
   gap: 8px;
   scrollbar-width: thin;
   scrollbar-color: #717171 transparent;
+  scroll-behavior: smooth;
 }
 
 .messageUser {
